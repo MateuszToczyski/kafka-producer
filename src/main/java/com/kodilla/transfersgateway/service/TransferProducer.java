@@ -22,6 +22,7 @@ public class TransferProducer {
     public void sendTransfer(final Transfer transfer) {
         AccountDto senderAccount = accountService.findByNrb(transfer.getSenderAccount());
         if (!isBalanceSufficient(senderAccount, transfer)) {
+            log.warn("Insufficient balance for transfer: {}", transfer);
             throw new InsufficientBalanceException("Insufficient balance for transfer: " + transfer);
         }
         TransferMessage transferMessage = new TransferMessage(transfer);
