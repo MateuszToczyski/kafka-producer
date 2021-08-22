@@ -2,13 +2,16 @@ package com.kodilla.transfersgateway.controller;
 
 import com.kodilla.commons.Transfer;
 import com.kodilla.transfersgateway.controller.request.TransferRequest;
+import com.kodilla.transfersgateway.exception.InsufficientBalanceException;
 import com.kodilla.transfersgateway.service.TransferProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @RestController
@@ -27,6 +30,10 @@ public class TransferController {
         transfer.setSenderAccount(request.getSenderAccount());
         transfer.setTitle(request.getTitle());
 
-        transferProducer.sendTransfer(transfer);
+        try {
+            transferProducer.sendTransfer(transfer);
+        } catch (InsufficientBalanceException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
+        }
     }
 }
