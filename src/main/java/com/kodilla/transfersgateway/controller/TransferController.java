@@ -3,6 +3,7 @@ package com.kodilla.transfersgateway.controller;
 import com.kodilla.commons.Transfer;
 import com.kodilla.transfersgateway.controller.request.TransferRequest;
 import com.kodilla.transfersgateway.exception.InsufficientBalanceException;
+import com.kodilla.transfersgateway.exception.SenderAccountNotFoundException;
 import com.kodilla.transfersgateway.service.TransferProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +33,12 @@ public class TransferController {
 
         try {
             transferProducer.sendTransfer(transfer);
+        } catch (SenderAccountNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sender account not found");
         } catch (InsufficientBalanceException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 }

@@ -4,6 +4,8 @@ import com.kodilla.commons.Transfer;
 import com.kodilla.commons.TransferMessage;
 import com.kodilla.transfersgateway.dto.AccountDto;
 import com.kodilla.transfersgateway.exception.InsufficientBalanceException;
+import com.kodilla.transfersgateway.exception.SenderAccountNotFoundException;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,10 +22,22 @@ public class TransferProducer {
     private final AccountService accountService;
 
     public void sendTransfer(final Transfer transfer) {
-        AccountDto senderAccount = accountService.findByNrb(transfer.getSenderAccount());
+        AccountDto senderAccount = null;
+        try {
+            senderAccount = accountService.findByNrb(transfer.getSenderAccount());
+        } catch (FeignException e) {
+            if (e.status() == 404) {
+                String errorMessage = "Sender account not found for transfer: " + transfer;
+                log.warn(errorMessage);
+                throw new SenderAccountNotFoundException(errorMessage);
+            } else {
+                throw e;
+            }
+        }
         if (!isBalanceSufficient(senderAccount, transfer)) {
-            log.warn("Insufficient balance for transfer: {}", transfer);
-            throw new InsufficientBalanceException("Insufficient balance for transfer: " + transfer);
+            String errorMessage = "Insufficient balance for transfer: " + transfer;
+            log.warn(errorMessage);
+            throw new InsufficientBalanceException(errorMessage);
         }
         TransferMessage transferMessage = new TransferMessage(transfer);
         log.info("Sending message to Kafka, transferMessage: {}", transferMessage);

@@ -20,3 +20,5 @@ eureka:
       defaultZone=http://localhost:8761/eureka/:
 server:
   port: 9990
+  error:
+    include-message: always
